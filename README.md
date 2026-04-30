@@ -1,74 +1,66 @@
-#!/bin/bash
-# auto-readme.sh
-# Auto-generate README.md for AI Resume Analyser (Updated)
+# AI Resume Analyser
 
-cat <<EOT > README.md
-# 🚀 AI Resume Analyser
+## Description
+AI Resume Analyser is a web application that helps job seekers analyze, improve, and optimize their resumes. It supports resume analysis, ATS checking, job matching, and mock interview preparation using Gemini-powered server APIs with a local fallback for resume analysis during Gemini key failures.
 
-## 🧠 Description
-AI Resume Analyser is an advanced AI-powered web app that helps job seekers **analyze**, **improve**, and **optimize** their resumes with intelligent suggestions.  
-It now integrates **live API-based analysis** using OpenAI and Gemini, providing **real-time evaluation and keyword matching**.
+## Features
+- AI-based resume analysis
+- ATS compatibility checking
+- Job description matching
+- Mock interview question generation
+- Mock interview answer evaluation
+- Local storage for recent results
+- Responsive UI with dark mode support
 
----
+## Tech Stack
+- Frontend: React, React Router, Tailwind CSS, Vite
+- Backend: Node.js route handlers
+- AI Integration: Gemini API
+- Document Parsing: `pdf-parse`, `pdf2json`, `mammoth`
 
-## ✨ Features
-- ✅ **AI-Based Resume Evaluation (New)**
-- 🔍 **Job Matching Engine**
-- 🧾 **ATS (Applicant Tracking System) Checker**
-- 🧠 **Mock Test for Resume Optimization**
-- 🌗 **Dark/Light Mode Toggle**
-- 💾 **Local Storage Based Resume Save**
-- 📩 **Contact & Feedback Section**
+## Environment Setup
+Create a `.env.local` file in the project root with:
 
----
+```env
+GEMINI_API_KEY=your_google_ai_studio_key
+GEMINI_MODEL=gemini-2.5-flash
+AUTH_SECRET=your_random_secret
+```
 
-## ⚙️ Tech Stack
-- **Frontend:** React.js, Next.js, Tailwind CSS  
-- **Backend / AI Integration:** ChatGPT API / Gemini API  
-- **State Management:** React Context / Local Storage  
+Notes:
 
----
+- Use a fresh Gemini API key from Google AI Studio.
+- Do not expose the API key in client-side variables such as `VITE_GEMINI_API_KEY`.
+- Restart the dev server after changing env values.
 
-## 🆕 Recent Updates (Highlighted)
-> The following are the latest improvements added to the project:
+## How to Run Locally
+1. Install dependencies:
 
-1. 🧩 **Integrated AI-Powered Resume Scoring** using ChatGPT/Gemini for real-time feedback.  
-2. 🎨 **Enhanced UI/UX** with modern Tailwind CSS animations and responsiveness.  
-3. 🌙 **Added Theme Toggle (Day/Night Mode)** for better accessibility.  
-4. 🧠 **Introduced Mock Resume Test Section** for performance-based resume insights.  
-5. ⚡ **Optimized Performance** and reduced initial load time by 30%.  
-6. 🔧 **Bug Fixes & Code Refactor** for cleaner and scalable architecture.
-
----
-
-## 💻 How to Run Locally
-1. Clone the repo:
-\`\`\`bash
-git clone git@github.com:Jaybyte01/AI-Resume-Analyser.git
-\`\`\`
-
-2. Navigate to project directory:
-\`\`\`bash
-cd AI-Resume-Analyser
-\`\`\`
-
-3. Install dependencies:
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
-4. Run the development server:
-\`\`\`bash
+2. Start the development server:
+
+```bash
 npm run dev
-\`\`\`
+```
 
-5. Open your browser at:
-👉 [http://localhost:3000](http://localhost:3000)
+3. Open the app in your browser:
 
----
+`http://localhost:4000`
 
-## 👨‍💻 Author
-**Jaykishor Singh**  
-🔗 [GitHub Profile](https://github.com/Jaybyte01)
+## Supported Resume Formats
+- PDF
+- DOCX
 
-EOT
+## Project Highlights
+- Shared server-side Gemini helper for consistent model usage
+- Centralized resume parsing for PDF and DOCX files
+- Local fallback analysis when Gemini access fails on localhost
+- Cleaner error messages for invalid or blocked Gemini keys
+
+## Author
+Jaykishor Singh
+
+GitHub: https://github.com/Jaybyte01
