@@ -11,10 +11,12 @@ export default function AnalyzerPage() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   const handleFileUpload = useCallback(async (file) => {
     setLoading(true);
     setError(null);
+    setNotice(null);
     
     try {
       const formData = new FormData();
@@ -38,6 +40,7 @@ export default function AnalyzerPage() {
 
       const result = await response.json();
       setAnalysis(result.analysis);
+      setNotice(result.warning || null);
 
       // Save to localStorage
       const savedAnalyses = JSON.parse(localStorage.getItem('resumeAnalyses') || '[]');
@@ -87,6 +90,17 @@ export default function AnalyzerPage() {
                 loading={loading}
                 error={error}
               />
+
+              {notice && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-amber-900 mb-1 font-jetbrains-mono">
+                    Localhost Notice
+                  </h3>
+                  <p className="text-sm text-amber-800 font-jetbrains-mono">
+                    {notice}
+                  </p>
+                </div>
+              )}
               
               {/* Loading State */}
               {loading && (

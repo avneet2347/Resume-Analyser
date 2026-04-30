@@ -1,27 +1,13 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import {
+  generateJsonWithGemini,
+  getGeminiApiKey,
+  getGeminiConfigErrorMessage,
+  getGeminiErrorDetails,
+  getGeminiModelName,
+} from "@/server/gemini";
+import { parseJsonText } from "@/server/json";
 
 export const runtime = "nodejs";
-
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-
-function parseJsonText(text) {
-  const cleaned = text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
-
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    const firstBrace = cleaned.indexOf("{");
-    const lastBrace = cleaned.lastIndexOf("}");
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
-    }
-    throw new Error("AI response was not valid JSON");
-  }
-}
 
 function normalizeEvaluation(parsed) {
   return {
@@ -33,91 +19,86 @@ function normalizeEvaluation(parsed) {
       leadership: Number(parsed.categoryScores?.leadership) || 0,
     },
     feedback: typeof parsed.feedback === "string" ? parsed.feedback : "",
-    detailedFeedback: Array.isArray(parsed.detailedFeedback) ? parsed.detailedFeedback : [],
+    detailedFeedback: Array.isArray(parsed.detailedFeedback)
+      ? parsed.detailedFeedback
+      : [],
     strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
     improvements: Array.isArray(parsed.improvements) ? parsed.improvements : [],
-    recommendations: typeof parsed.recommendations === "string" ? parsed.recommendations : "",
+    recommendations:
+      typeof parsed.recommendations === "string" ? parsed.recommendations : "",
   };
 }
 
 export async function POST(request) {
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!getGeminiApiKey()) {
       return Response.json(
-        { error: "AI service not configured. Please check your API key." },
+        {
+          error: "AI service not configured.",
+          details: getGeminiConfigErrorMessage(),
+        },
         { status: 500 }
       );
     }
 
     const { jobRole, questions, answers } = await request.json();
+    const trimmedJobRole = String(jobRole || "").trim();
 
-    if (!jobRole || !questions || !answers) {
+    if (!trimmedJobRole || !Array.isArray(questions) || !Array.isArray(answers)) {
       return Response.json(
-        { error: "Job role, questions, and answers are required" },
+        { error: "Job role, questions, and answers are required." },
         { status: 400 }
       );
     }
 
     if (questions.length !== answers.length) {
       return Response.json(
-        { error: "Number of questions and answers must match" },
+        { error: "Number of questions and answers must match." },
         { status: 400 }
       );
     }
 
     const qaText = questions
       .map(
-        (q, i) => `Question ${i + 1}: ${q}\nAnswer: ${answers[i]}`
+        (question, index) =>
+          `Question ${index + 1}: ${question}\nAnswer: ${answers[index]}`
       )
       .join("\n\n");
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-
-    const prompt = `You are an expert interviewer and career coach. Evaluate the following interview responses for a ${jobRole} role:
+    const prompt = `You are an expert interviewer and career coach. Evaluate the following interview responses for a ${trimmedJobRole} role:
 
 ${qaText}
 
 Return ONLY valid JSON:
 {"overallScore": number, "categoryScores": {"communication": number, "technical": number, "problemSolving": number, "leadership": number}, "feedback": "string", "detailedFeedback": ["string"], "strengths": ["string"], "improvements": ["string"], "recommendations": "string"}`;
 
-    let result;
+    let responseText = "";
+    let modelName = getGeminiModelName();
+
     try {
-      result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0,
-          responseMimeType: "application/json",
-        },
-      });
-    } catch (aiError) {
-      console.error("Gemini answer evaluation error:", aiError);
+      const result = await generateJsonWithGemini(prompt);
+      responseText = result.text;
+      modelName = result.modelName;
+    } catch (error) {
       return Response.json(
         {
-          error: "Failed to evaluate answers with AI.",
-          details: aiError.message,
-          model: GEMINI_MODEL,
+          error: "Failed to evaluate answers with Gemini.",
+          details: getGeminiErrorDetails(error),
+          model: modelName,
+          raw: error instanceof Error ? error.message : "Unknown Gemini error",
         },
         { status: 500 }
       );
     }
 
-    let parsed;
-    try {
-      parsed = normalizeEvaluation(parseJsonText(result.response.text()));
-    } catch (err) {
-      console.error("AI JSON parse failed:", result.response.text());
-      return Response.json(
-        { error: "AI returned invalid JSON", details: err.message },
-        { status: 500 }
-      );
-    }
-
-    return Response.json(parsed);
+    return Response.json(normalizeEvaluation(parseJsonText(responseText)));
   } catch (error) {
     console.error("Answer evaluation error:", error);
     return Response.json(
-      { error: "Failed to evaluate answers. Please try again.", details: error.message },
+      {
+        error: "Failed to evaluate answers.",
+        details: error instanceof Error ? error.message : "Unknown server error",
+      },
       { status: 500 }
     );
   }

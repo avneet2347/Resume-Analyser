@@ -7,3 +7,6 @@
   
 # Env files
 .env
+.env.local
+.env.*.local
+*- Copy.env

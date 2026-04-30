@@ -36,8 +36,7 @@ export function FileUpload({ onFileSelect, loading, error }) {
     // Check file type
     const allowedTypes = [
       'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
     
     if (!allowedTypes.includes(file.type)) {
@@ -84,7 +83,7 @@ export function FileUpload({ onFileSelect, loading, error }) {
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept=".pdf,.docx,.doc"
+          accept=".pdf,.docx"
           onChange={handleFileInput}
           disabled={loading}
         />
